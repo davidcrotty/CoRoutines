@@ -29,8 +29,16 @@ class MainActivity : AppCompatActivity() {
     fun mainThreadWorkSliced() {
         GlobalScope.launch(coroutineContext) { //background thread pool, main by default!
             Log.d("scope", "Thread: ${Thread.currentThread().name}") //should be background
-            delay(5000) // has suspended this portion of the thread, but is running on the main thread. This is a fibre
+//            delay(5000) // has suspended this portion of the thread, but is running on the main thread. This is a fibre
+            count(0..10)
             return@launch Toast.makeText(this@MainActivity, "GlobalScope", Toast.LENGTH_SHORT).show() //yield is ui thread
+        }
+    }
+
+    suspend fun count(range: IntRange) {
+        for(i in range) {
+            Log.d("scope", "Count: ${Thread.currentThread().name}") //should be background
+            delay(1000)
         }
     }
 
