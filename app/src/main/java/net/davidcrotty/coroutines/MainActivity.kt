@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     val job = Job()
     val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main //everything ran on the UI thread, distributed via fibres
+        get() = job //everything ran on the UI thread, distributed via fibres
 
     private val client = Retrofit.Builder().client(
         OkHttpClient()
@@ -59,7 +59,9 @@ class MainActivity : AppCompatActivity() {
             } catch (e : java.lang.Exception) {
                 "Couldnt find a person"
             }
-            Toast.makeText(this@MainActivity, "Received call ${person}", Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(this@MainActivity, "Received call ${person}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
