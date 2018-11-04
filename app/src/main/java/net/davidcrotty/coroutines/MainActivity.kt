@@ -4,7 +4,14 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import com.google.gson.GsonBuilder
+import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import kotlinx.coroutines.*
+import okhttp3.OkHttpClient
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -17,18 +24,44 @@ class MainActivity : AppCompatActivity() {
 
     val job = Job()
     val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main //just this works, is it sharing //w the UI thread?
+        get() = Dispatchers.Main //everything ran on the UI thread, distributed via fibres
+
+    private val client = Retrofit.Builder().client(
+        OkHttpClient()
+    )
+    .baseUrl("https://swapi.co/api/")
+    .addConverterFactory(
+        GsonConverterFactory.create()
+    )
+    .addCallAdapterFactory(CoroutineCallAdapterFactory())
+    .build()
+    .create(SWAPI::class.java)
+
+    interface SWAPI {
+        @GET("people/1")
+        fun people() : Deferred<People>
+    }
+
+    data class People(val name: String)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        mainThreadWorkSliced()
+        networkCall()
         Toast.makeText(this, "Act launched", Toast.LENGTH_SHORT).show()
+    }
+
+    fun networkCall() {
+        GlobalScope.launch(coroutineContext) {
+            Log.d("scope", "Thread: ${Thread.currentThread().name}") //main thread
+            val person = client.people().await()
+            Toast.makeText(this@MainActivity, "Received call ${person.name}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun mainThreadWorkSliced() {
         GlobalScope.launch(coroutineContext) { //background thread pool, main by default!
-            Log.d("scope", "Thread: ${Thread.currentThread().name}") //should be background
+            Log.d("scope", "Thread: ${Thread.currentThread().name}") //main thread
 //            delay(5000) // has suspended this portion of the thread, but is running on the main thread. This is a fibre
             count(0..10)
             return@launch Toast.makeText(this@MainActivity, "GlobalScope", Toast.LENGTH_SHORT).show() //yield is ui thread
