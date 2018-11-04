@@ -54,9 +54,18 @@ class MainActivity : AppCompatActivity() {
     fun networkCall() {
         GlobalScope.launch(coroutineContext) {
             Log.d("scope", "Thread: ${Thread.currentThread().name}") //main thread
-            val person = client.people().await()
-            Toast.makeText(this@MainActivity, "Received call ${person.name}", Toast.LENGTH_SHORT).show()
+            val person = try {
+                crappyCall()
+            } catch (e : java.lang.Exception) {
+                "Couldnt find a person"
+            }
+            Toast.makeText(this@MainActivity, "Received call ${person}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    suspend fun crappyCall() : String {
+        val person = client.people().await()
+        return person.name
     }
 
     fun mainThreadWorkSliced() {
