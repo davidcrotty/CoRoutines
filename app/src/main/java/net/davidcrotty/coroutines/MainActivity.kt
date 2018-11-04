@@ -12,7 +12,9 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import java.lang.Exception
 import kotlin.coroutines.CoroutineContext
+import kotlin.random.Random
 
 /**
  * Objective: Run some co-routines.
@@ -66,6 +68,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     suspend fun crappyCall() : String {
+        if ((0..10).random() < 5) {
+            throw Exception("Boom")
+        }
         val person = client.people().await()
         return person.name
     }
